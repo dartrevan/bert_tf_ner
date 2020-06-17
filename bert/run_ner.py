@@ -144,6 +144,33 @@ def open_ifexists(fpath):
         return open(fpath, encoding='utf-8')
     return range(sys.maxsize)
 
+def iterate_over_conll(file_path, sep=' '):
+    with open(file_path, encoding="utf-8") as f:
+        words = []
+        labels = []
+        gazetteers = []
+        for line in f:
+            if line.startswith("-DOCSTART-") or line == "" or line == "\n":
+                if words:
+                    yield words, labels, gazetteers
+                    words = []
+                    labels = []
+                    gazetteers = []
+            else:
+                splits = line.split(sep)
+                #replacing spaces with underscore in words
+                words.append(splits[0].replace(' ', '_'))
+                if len(splits) > 1:
+                    labels.append(splits[1].replace("\n", ""))
+                else:
+                    # Examples could have no label for mode = "test"
+                    labels.append("O")
+                if len(splits) > 2:
+                    gazetteers.append(splits[2].replace("\n", ""))
+                else:
+                    gazetteers.append("O")
+        if words:
+            yield words, labels, gazetteers
 
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
@@ -161,45 +188,45 @@ class DataProcessor(object):
         raise NotImplementedError()
 
     @classmethod
-    def _read_data(self, tweets_file, labels_file, gazetteers_file):
+    def _read_data(self, conll_file):
         """Reads a BIO data."""
-        tweets_input_stream = open_ifexists(tweets_file)
-        labels_input_stream = open_ifexists(labels_file)
-        gazetteers_input_stream = open_ifexists(gazetteers_file)
-        for tweet, labels, gazetteers in zip(tweets_input_stream, labels_input_stream, gazetteers_input_stream):
-            w = ' '.join([word for word in tweet.strip().split() if len(word) > 0])
+        for tweet, labels, gazetteers in iterate_over_conll(conll_file, sep='\t'):
+            w = ' '.join([word for word in tweet if len(word) > 0])
             if not FLAGS.do_train:
                 l = ' '.join(['O']*len(w.split()))
                 g = ' '.join(['O']*len(w.split()))
             else:
-                l = ' '.join([label for label in labels.strip().split() if len(label) > 0])
-                g = ' '.join([gazetteer for gazetteer in gazetteers.strip().split() if len(gazetteer) > 0])
+                l = ' '.join([label for label in labels if len(label) > 0])
+                g = ' '.join([gazetteer for gazetteer in gazetteers if len(gazetteer) > 0])
             yield [l, w, g]
 
 
 class NerProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
-        tweets_file = os.path.join(data_dir, "train_texts.txt")
-        labels_file = os.path.join(data_dir, "train_labels.txt")
-        gazetteers_file = os.path.join(data_dir, "train_gazetteers.txt")
+        #tweets_file = os.path.join(data_dir, "train_texts.txt")
+        #labels_file = os.path.join(data_dir, "train_labels.txt")
+        #gazetteers_file = os.path.join(data_dir, "train_gazetteers.txt")
+        train_data_file = os.path.join(data_dir, "train.tsv")
         return self._create_example(
-            self._read_data(tweets_file, labels_file, gazetteers_file), "train"
+            self._read_data(train_data_file), "train"
         )
 
     def get_dev_examples(self, data_dir):
-        tweets_file = os.path.join(data_dir, "test_texts.txt")
-        labels_file = os.path.join(data_dir, "test_labels.txt")
-        gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+        #tweets_file = os.path.join(data_dir, "test_texts.txt")
+        #labels_file = os.path.join(data_dir, "test_labels.txt")
+        #gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+        test_data_file = os.path.join(data_dir, "test.tsv")
         return self._create_example(
-            self._read_data(tweets_file, labels_file, gazetteers_file), "dev"
+            self._read_data(test_data_file), "dev"
         )
 
     def get_test_examples(self,data_dir):
-        tweets_file = os.path.join(data_dir, "test_texts.txt")
-        labels_file = os.path.join(data_dir, "test_labels.txt")
-        gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+        #tweets_file = os.path.join(data_dir, "test_texts.txt")
+        #labels_file = os.path.join(data_dir, "test_labels.txt")
+        #gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+        test_data_file = os.path.join(data_dir, "test.tsv")
         return self._create_example(
-            self._read_data(tweets_file, labels_file, gazetteers_file), "test")
+            self._read_data(test_data_file), "test")
 
     def get_labels(self, data_dir):
         tagset_file = os.path.join(data_dir, 'tagset.txt')
