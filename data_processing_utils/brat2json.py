@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 from sklearn.model_selection import KFold
-
+import argparse
 
 class Folds:
 
@@ -104,4 +104,11 @@ class Folds:
 
         df.to_json(self.out_file, orient='table', force_ascii=False)
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-input", "--input", type=str)
+parser.add_argument("-out_path", "--out_path", type=str)
+args = parser.parse_args() 
+b2j = Folds(args.input, "data",5, args.out_path)
+b2j.get_folds()
 

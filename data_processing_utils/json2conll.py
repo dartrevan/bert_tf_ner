@@ -17,7 +17,7 @@ class Json2conll:
     def __init__(self,in_file, out_file, entity, tagger, vocab, lower_case):
         self.in_file = in_file
         self.out_file = out_file
-        self.entity = entity
+        self.entity = entity.split(",")
         self.tagger = tagger
         self.vocab = vocab
         self.lower_case = lower_case
@@ -198,3 +198,10 @@ class Json2conll:
         self.json_to_conll(self.in_file, "data/{}.conll".format(self.out_file), "data/{}_labels.txt".format(self.out_file),
                            self.entity)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-in_json", "--in_json", type=str)
+parser.add_argument("-out_conll", "--out_conll", type=str)
+parser.add_argument("-entity", "--entity", type=str)
+parser.add_argument("-tagger", "--tagger", type=str, default="averaged_perceptron_tagger")
+parser.add_argument("-vocab_file", "--vocab_file", type=str)
+parser.add_argument("-lower_case", "--lower_case", type=bool)
