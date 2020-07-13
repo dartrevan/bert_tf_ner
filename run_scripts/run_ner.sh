@@ -15,7 +15,7 @@ CUDA_VISIBLE_DEVICES=0 python $PROJECT_DIR/bert/run_ner.py --do_eval=True --do_t
 
 python $PROJECT_DIR/bert/biocodes/detok.py --tokens $OUTPUT_DIR/token_test.txt --label $OUTPUT_DIR/label_test.txt \
                                            --save_to $OUTPUT_DIR/predicted_biobert.txt
-python $PROJECT_DIR/data_processing_utils/combine.py --test_labels $DATA_DIR/test_labels.txt \
+python $PROJECT_DIR/data_processing_utils/combine.py --test_labels $DATA_DIR/test.tsv \
                                                      --predicted $OUTPUT_DIR/predicted_biobert.txt \
                                                      --save_to $OUTPUT_DIR/predicted_conll.txt
 $PROJECT_DIR/evaluation_scripts/./conlleval < $OUTPUT_DIR/predicted_conll.txt > $OUTPUT_DIR/eval_results.txt
