@@ -6,7 +6,7 @@ OUTPUT_DIR=$3
 
 mkdir $OUTPUT_DIR
 
-CUDA_VISIBLE_DEVICES=0 python $PROJECT_DIR/bert/run_ner.py --do_eval=True --do_train=False --do_predict=True \
+CUDA_VISIBLE_DEVICES=0 python $PROJECT_DIR/bert/run_ner.py --do_eval=True --do_train=True --do_predict=True \
                               --vocab_file=$MODEL_DIR/vocab.txt --bert_config_file=$MODEL_DIR/bert_config.json \
                               --init_checkpoint=$MODEL_DIR/bert_model.ckpt \
                               --num_train_epochs $4  --data_dir=$DATA_DIR  \
