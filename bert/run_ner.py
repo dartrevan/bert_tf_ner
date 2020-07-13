@@ -19,6 +19,7 @@ from tensorflow.python.ops import math_ops
 import tf_metrics
 import pickle
 import sys
+
 flags = tf.flags
 
 FLAGS = flags.FLAGS
@@ -144,6 +145,7 @@ def open_ifexists(fpath):
         return open(fpath, encoding='utf-8')
     return range(sys.maxsize)
 
+
 def iterate_over_conll(file_path, sep=' '):
     with open(file_path, encoding="utf-8") as f:
         words = []
@@ -158,7 +160,7 @@ def iterate_over_conll(file_path, sep=' '):
                     gazetteers = []
             else:
                 splits = line.split(sep)
-                #replacing spaces with underscore in words
+                # replacing spaces with underscore in words
                 words.append(splits[0].replace(' ', '_'))
                 if len(splits) > 1:
                     labels.append(splits[1].replace("\n", ""))
@@ -171,6 +173,7 @@ def iterate_over_conll(file_path, sep=' '):
                     gazetteers.append("O")
         if words:
             yield words, labels, gazetteers
+
 
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
@@ -193,8 +196,8 @@ class DataProcessor(object):
         for tweet, labels, gazetteers in iterate_over_conll(conll_file, sep='\t'):
             w = ' '.join([word for word in tweet if len(word) > 0])
             if not FLAGS.do_train:
-                l = ' '.join(['O']*len(w.split()))
-                g = ' '.join(['O']*len(w.split()))
+                l = ' '.join(['O'] * len(w.split()))
+                g = ' '.join(['O'] * len(w.split()))
             else:
                 l = ' '.join([label for label in labels if len(label) > 0])
                 g = ' '.join([gazetteer for gazetteer in gazetteers if len(gazetteer) > 0])
@@ -203,27 +206,27 @@ class DataProcessor(object):
 
 class NerProcessor(DataProcessor):
     def get_train_examples(self, data_dir):
-        #tweets_file = os.path.join(data_dir, "train_texts.txt")
-        #labels_file = os.path.join(data_dir, "train_labels.txt")
-        #gazetteers_file = os.path.join(data_dir, "train_gazetteers.txt")
+        # tweets_file = os.path.join(data_dir, "train_texts.txt")
+        # labels_file = os.path.join(data_dir, "train_labels.txt")
+        # gazetteers_file = os.path.join(data_dir, "train_gazetteers.txt")
         train_data_file = os.path.join(data_dir, "train.tsv")
         return self._create_example(
             self._read_data(train_data_file), "train"
         )
 
     def get_dev_examples(self, data_dir):
-        #tweets_file = os.path.join(data_dir, "test_texts.txt")
-        #labels_file = os.path.join(data_dir, "test_labels.txt")
-        #gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+        # tweets_file = os.path.join(data_dir, "test_texts.txt")
+        # labels_file = os.path.join(data_dir, "test_labels.txt")
+        # gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
         test_data_file = os.path.join(data_dir, "test.tsv")
         return self._create_example(
             self._read_data(test_data_file), "dev"
         )
 
-    def get_test_examples(self,data_dir):
-        #tweets_file = os.path.join(data_dir, "test_texts.txt")
-        #labels_file = os.path.join(data_dir, "test_labels.txt")
-        #gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
+    def get_test_examples(self, data_dir):
+        # tweets_file = os.path.join(data_dir, "test_texts.txt")
+        # labels_file = os.path.join(data_dir, "test_labels.txt")
+        # gazetteers_file = os.path.join(data_dir, "test_gazetteers.txt")
         test_data_file = os.path.join(data_dir, "test.tsv")
         return self._create_example(
             self._read_data(test_data_file), "test")
@@ -245,13 +248,13 @@ class NerProcessor(DataProcessor):
         return examples
 
 
-def write_tokens(tokens,mode):
-    if mode=="test":
-        path = os.path.join(FLAGS.output_dir, "token_"+mode+".txt")
-        wf = open(path,'a', encoding='utf-8')
+def write_tokens(tokens, mode):
+    if mode == "test":
+        path = os.path.join(FLAGS.output_dir, "token_" + mode + ".txt")
+        wf = open(path, 'a', encoding='utf-8')
         for token in tokens:
-            if token!="**NULL**":
-                wf.write(token+'\n')
+            if token != "**NULL**":
+                wf.write(token + '\n')
         wf.close()
 
 
@@ -370,7 +373,7 @@ def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remain
         "input_mask": tf.FixedLenFeature([seq_length], tf.int64),
         "segment_ids": tf.FixedLenFeature([seq_length], tf.int64),
         "label_ids": tf.FixedLenFeature([seq_length], tf.int64),
-        "gazetteers":  tf.FixedLenFeature([seq_length], tf.int64),
+        "gazetteers": tf.FixedLenFeature([seq_length], tf.int64),
         "length": tf.FixedLenFeature([1], tf.int64)
     }
 
@@ -395,6 +398,7 @@ def file_based_input_fn_builder(input_file, seq_length, is_training, drop_remain
             drop_remainder=drop_remainder
         ))
         return d
+
     return input_fn
 
 
@@ -473,17 +477,19 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
         gazetteers = features["gazetteers"]
         is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-        (total_loss,  per_example_loss, logits, log_probs, predicts) = create_model(
-            bert_config, is_training, input_ids, input_mask,segment_ids, label_ids,
+        (total_loss, per_example_loss, logits, log_probs, predicts) = create_model(
+            bert_config, is_training, input_ids, input_mask, segment_ids, label_ids,
             num_labels, use_one_hot_embeddings, lengths, gazetteers)
         tvars = tf.trainable_variables()
         scaffold_fn = None
         if init_checkpoint:
-            (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars, init_checkpoint)
+            (assignment_map, initialized_variable_names) = modeling.get_assignment_map_from_checkpoint(tvars,
+                                                                                                       init_checkpoint)
             if use_tpu:
                 def tpu_scaffold():
                     tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
                     return tf.train.Scaffold()
+
                 scaffold_fn = tpu_scaffold
             else:
                 tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
@@ -504,24 +510,25 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                 loss=total_loss,
                 train_op=train_op,
                 scaffold_fn=scaffold_fn)
-        elif mode == tf.estimator.ModeKeys.EVAL:      
+        elif mode == tf.estimator.ModeKeys.EVAL:
             def metric_fn(per_example_loss, label_ids, logits):
                 predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
-                precision = tf_metrics.precision(label_ids,predictions,num_labels,[1,2],average="macro")
-                recall = tf_metrics.recall(label_ids,predictions,num_labels,[1,2],average="macro")
-                f = tf_metrics.f1(label_ids,predictions,num_labels,[1,2],average="macro")
+                precision = tf_metrics.precision(label_ids, predictions, num_labels, [1, 2], average="macro")
+                recall = tf_metrics.recall(label_ids, predictions, num_labels, [1, 2], average="macro")
+                f = tf_metrics.f1(label_ids, predictions, num_labels, [1, 2], average="macro")
                 return {
                     "eval_precision": precision,
                     "eval_recall": recall,
                     "eval_f": f,
                 }
+
             eval_metrics = (metric_fn, [per_example_loss, label_ids, logits])
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
                 eval_metrics=eval_metrics,
                 scaffold_fn=scaffold_fn)
-        
+
         elif mode == tf.estimator.ModeKeys.PREDICT:
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
@@ -529,6 +536,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                 scaffold_fn=scaffold_fn
             )
         return output_spec
+
     return model_fn
 
 
@@ -547,7 +555,7 @@ def read_tokens(token_path):
 
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
-    #if not FLAGS.do_train and not FLAGS.do_eval:
+    # if not FLAGS.do_train and not FLAGS.do_eval:
     #    raise ValueError("At least one of `do_train` or `do_eval` must be True.")
 
     bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
@@ -594,7 +602,7 @@ def main(_):
 
     model_fn = model_fn_builder(
         bert_config=bert_config,
-        num_labels=len(label_list)+1,
+        num_labels=len(label_list) + 1,
         init_checkpoint=FLAGS.init_checkpoint,
         learning_rate=FLAGS.learning_rate,
         num_train_steps=num_train_steps,
@@ -654,14 +662,14 @@ def main(_):
         with open(os.path.join(FLAGS.output_dir, 'label2id.pkl'), 'rb') as rf:
             label2id = pickle.load(rf)
             id2label = {value: key for key, value in label2id.items()}
-        #if os.path.exists(token_path):
+        # if os.path.exists(token_path):
         #    os.remove(token_path)
         predict_examples = processor.get_test_examples(FLAGS.data_dir)
 
         predict_file = os.path.join(FLAGS.output_dir, "predict.tf_record")
         filed_based_convert_examples_to_features(predict_examples, label_list,
-                                                FLAGS.max_seq_length, tokenizer,
-                                                predict_file, mode="test")
+                                                 FLAGS.max_seq_length, tokenizer,
+                                                 predict_file, mode="test")
         tf.logging.info("***** Running prediction*****")
         tf.logging.info("  Num examples = %d", len(predict_examples))
         tf.logging.info("  Batch size = %d", FLAGS.predict_batch_size)
@@ -680,16 +688,17 @@ def main(_):
         print('predicted')
         output_predict_file = os.path.join(FLAGS.output_dir, "label_test.txt")
         tokens_iterator = read_tokens(token_path)
-        with open(output_predict_file,'w') as p_writer:
+        with open(output_predict_file, 'w') as p_writer:
             for tokens, prediction in zip(tokens_iterator, result):
                 slen = len(tokens)
-                output_line = "\n".join(id2label[id] if id != 0 else id2label[3] for id in prediction['prediction'][:slen]) + "\n"
+                output_line = "\n".join(
+                    id2label[id] if id != 0 else id2label[3] for id in prediction['prediction'][:slen]) + "\n"
                 p_writer.write(output_line)
 
 
 if __name__ == "__main__":
     flags.mark_flag_as_required("data_dir")
-    #flags.mark_flag_as_required("task_name")
+    # flags.mark_flag_as_required("task_name")
     flags.mark_flag_as_required("vocab_file")
     flags.mark_flag_as_required("bert_config_file")
     flags.mark_flag_as_required("output_dir")
